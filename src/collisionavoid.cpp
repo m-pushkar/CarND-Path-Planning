@@ -29,21 +29,23 @@ int overlap(vector<double> a, vector<double> b){
 }
 
 int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, double theta1){
-  // Implementing Seperating Axis Theorem (SAT) for collision detection //
+  // Implement Seperating Axis Theorem (SAT) for collision detection //
   
   // Set ego vehicle safe distance
   double safe_dist_long = 5.5;
   double safe_dist_lat = 1.9;
   
   //Vehicle wrapper
-  MatrixXd rec_wrapper(2.4);
+  MatrixXd rec_wrapper(2,4);
   rec_wrapper << safe_dist_long, safe_dist_long, -safe_dist_long, -safe_dist_long,
                 -safe_dist_lat, safe_dist_lat, safe_dist_lat, -safe_dist_lat;
   
   // Rotate wrapper by heading
   Matrix2d rot0, rot1;
-  rot0 << cos(theta0), -sin(theta0), sin(theta0), cos(tehta0);
-  rot1 << cos(theta1), -sin(theta1), sin(theta1), cos(tehta1);
+  rot0 << cos(theta0), -sin(theta0),
+          sin(theta0), cos(tehta0);
+  rot1 << cos(theta1), -sin(theta1),
+          sin(theta1), cos(tehta1);
   
   MatrixXd rec0(2,4);
   MatrixXd rec1(2,4);
@@ -77,7 +79,6 @@ int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, do
     
     // Projection of rec1
     double min1 = principal_axis.dot(rec1.col(0));
-    
     double max1 = min1;
     for (int j = 0; j < rec1.cols(); ++j){
       double projection1 = principal_axis.dot(rec1.col(j));
@@ -87,8 +88,6 @@ int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, do
     
     // Overlap checking
     if (!overlap({min0, max0}, {min1, max1})) return 0;
-  }
-  
+  }  
   return 1;
-  
 }

@@ -81,8 +81,7 @@ vector <VectorXd> InterpolateWaypt(double x, double y, const <vector> &maps_x, c
 }
 
 int NextWaypt(double x, double y, double theta, const <vector> &maps_x, const <vector> &maps_y){
-  nearest_waypt = NearesWaypt(x, y, maps_x, maps_y);
-  
+  int nearest_waypt = NearesWaypt(x, y, maps_x, maps_y);
   double x_maps = maps_x[nearest_waypt];
   double y_maps = maps_y[nearest_waypt];
   double heading = atan2((y_maps - y) - (x_maps - x));
@@ -96,7 +95,7 @@ int NextWaypt(double x, double y, double theta, const <vector> &maps_x, const <v
 
 // Transformation from Cartesian to Frenet
 vector<double> Frenet(double x, double y, double theta, const <vector> &maps_x, const <vector> &maps_y){
-  next_waypt = NextWaypt(x, y, theta, maps_x, maps_y);
+  int next_waypt = NextWaypt(x, y, theta, maps_x, maps_y);
   int prev_waypt = next_waypt - 1;
   if (next_waypt == 0){
     prev_waypt = maps_x.size() - 1;
@@ -104,7 +103,7 @@ vector<double> Frenet(double x, double y, double theta, const <vector> &maps_x, 
   
   double n_x = maps_x[next_waypt] - maps_x[prev_waypt];
   double n_y = maps_y[next_waypt] - maps_y[next_waypt];
-  double x_x = x -maps_x[prev_waypt];
+  double x_x = x - maps_x[prev_waypt];
   double x_y = y - maps_y[prev_waypt];
   
   // Projection of x on n
@@ -125,6 +124,7 @@ vector<double> Frenet(double x, double y, double theta, const <vector> &maps_x, 
   
   //s value calculation
   double freent_s = 0;
+    
   for (int i = 0; i < prev_waypt; ++i){
     frenet_s += distance(maps_x[i], maps_y[i], maps_x[i+1], maps_y[i+1]);
   }
@@ -142,12 +142,10 @@ vector<double> Cartesian(double s, double d, const <vector> &maps_s, const <vect
   
   int waypt2 = (prev_waypt + 1) % maps_x.size();
   double heading = atan2((maps_y[waypt2] - maps_y[prev_waypt]) , (maps_x[waypt2] - maps_x[prev_waypt]));
-  
   double seg_s = (s - maps_s[prev_waypt]);
   double seg_x = maps_x[prev_waypt] + seg_s * cos(heading);
   double seg_y = maps_y[prev_waypt] + seg_s * sin(heading);
   double perpend_heading = heading - M_PI/2;
-  
   double x = seg_x + d * cos(perpend_heading);
   double y = seg_y + d * sin(perpend_heading);
   
