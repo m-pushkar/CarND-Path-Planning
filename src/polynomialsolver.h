@@ -1,5 +1,14 @@
 #ifndef polynomialsolver
-#deifne polynomialsolver
+#define polynomialsolver
+
+#include <vector>
+#include "Eigen-3.3/Eigen/Core"
+#include "Eigen-3.3/Eigen/QR"
+#include "Eigen-3.3/Eigen/Dense"
+
+using std::vector;
+using namespace std;
+using namespace Eigen;
 
 double huber_loss(double speed, double target);
 
