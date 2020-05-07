@@ -12,7 +12,7 @@ using namespace Eigen;
 
 double huber_loss(double speed, double target);
 
-VectorXd getpolycoeff(double s0, double s0dot, double s02dot, double st, double stdot, double st2dot, double t_termial);
+VectorXd getpolycoeff(double s0, double s0dot, double s02dot, double st, double stdot, double st2dot, double t_termnial);
 
 int solvepolyfullcond(double s0, double s0dot, double s02dot, double s1, double s1dot, double s12dot, double kspeed, double ks, double max_speed, double acc_thresh, vector<double> tjset, vector<double> ds1set, MatrixXd &Trajectories, VectorXd &Costs);
 

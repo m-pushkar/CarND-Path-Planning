@@ -23,7 +23,7 @@ double distance(double x1, double y1, double x2, double y2){
   return (sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)));
 }
 
-int NearestWaypt(double x, double y, const <vector> &maps_x, const <vector> &maps_y){
+int NearestWaypt(double x, double y, const vector<double> &maps_x, const vector<double> &maps_y){
   double large_num = 100000;
   int nearest_waypt = 0;
   
@@ -40,7 +40,7 @@ int NearestWaypt(double x, double y, const <vector> &maps_x, const <vector> &map
   return nearest_waypt;
 }
 
-vector <VectorXd> InterpolateWaypt(double x, double y, const <vector> &maps_x, const <vector> &maps_y, const <vector> &maps_s){
+vector <VectorXd> InterpolateWaypt(double x, double y, const vector<double> &maps_x, const vector<double> &maps_y, const vector<double> &maps_s){
   int nearest_waypt = NearestWaypt(x, y, maps_x, maps_y);
   int last_waypt = maps_x.size();
   int interpolate = 4;
@@ -80,11 +80,11 @@ vector <VectorXd> InterpolateWaypt(double x, double y, const <vector> &maps_x, c
   return {x_cof, y_cof};  
 }
 
-int NextWaypt(double x, double y, double theta, const <vector> &maps_x, const <vector> &maps_y){
-  int nearest_waypt = NearesWaypt(x, y, maps_x, maps_y);
+int NextWaypt(double x, double y, double theta, const vector<double> &maps_x, const vector<double> &maps_y){
+  int nearest_waypt = NearestWaypt(x, y, maps_x, maps_y);
   double x_maps = maps_x[nearest_waypt];
   double y_maps = maps_y[nearest_waypt];
-  double heading = atan2((y_maps - y) - (x_maps - x));
+  double heading = atan2((y_maps - y), (x_maps - x));
   double angle = abs(theta - heading);
   
   if (angle > M_PI/4){
@@ -94,7 +94,7 @@ int NextWaypt(double x, double y, double theta, const <vector> &maps_x, const <v
 }
 
 // Transformation from Cartesian to Frenet
-vector<double> Frenet(double x, double y, double theta, const <vector> &maps_x, const <vector> &maps_y){
+vector<double> Frenet(double x, double y, double theta, const vector<double> &maps_x, const vector<double> &maps_y){
   int next_waypt = NextWaypt(x, y, theta, maps_x, maps_y);
   int prev_waypt = next_waypt - 1;
   if (next_waypt == 0){
@@ -123,17 +123,17 @@ vector<double> Frenet(double x, double y, double theta, const <vector> &maps_x, 
   }
   
   //s value calculation
-  double freent_s = 0;
+  double frenet_s = 0;
     
   for (int i = 0; i < prev_waypt; ++i){
     frenet_s += distance(maps_x[i], maps_y[i], maps_x[i+1], maps_y[i+1]);
   }
   frenet_s += distance(0, 0, proj_x, proj_y);
-  return {frenet_s, frenet_d}
+  return {frenet_s, frenet_d};
 }
 
 // Transformation from Frenet to Cartesian
-vector<double> Cartesian(double s, double d, const <vector> &maps_s, const <vector> &maps_x const <vector> &maps_y){
+vector<double> Cartesian(double s, double d, const vector<double> &maps_s, const vector<double> &maps_x, const vector<double> &maps_y){
   int prev_waypt = -1;
   
   while(s > maps_s[prev_waypt + 1] && (prev_waypt < (int)(maps_s.size() - 1))){

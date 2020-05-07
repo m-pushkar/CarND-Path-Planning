@@ -10,7 +10,7 @@
 using namespace std;
 using namespace Eigen;
 
-int constains(double n, vector<double> range){
+int contains(double n, vector<double> range){
   float a = range[0];
   float b = range[1];
   if (b < a){
@@ -43,9 +43,9 @@ int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, do
   // Rotate wrapper by heading
   Matrix2d rot0, rot1;
   rot0 << cos(theta0), -sin(theta0),
-          sin(theta0), cos(tehta0);
+          sin(theta0), cos(theta0);
   rot1 << cos(theta1), -sin(theta1),
-          sin(theta1), cos(tehta1);
+          sin(theta1), cos(theta1);
   
   MatrixXd rec0(2,4);
   MatrixXd rec1(2,4);
@@ -61,7 +61,7 @@ int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, do
   
   // Set principal axes
   MatrixXd axis (2,4);
-  axis << cos(theta0), sin(theta0), cos(theta1), sin(tehta1),
+  axis << cos(theta0), sin(theta0), cos(theta1), sin(theta1),
           sin(theta0), -cos(theta0), sin(theta1), -cos(theta1);
   
   for (int i = 0; i < axis.cols(); ++i){

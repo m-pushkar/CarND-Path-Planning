@@ -21,7 +21,7 @@ double huber_loss(double speed, double target){
   }
 }
 
-VectorXd getpolycoeff(double s0, double s0dot, double s02dot, double st, double stdot, double st2dot, double t_termial){
+VectorXd getpolycoeff(double s0, double s0dot, double s02dot, double st, double stdot, double st2dot, double t_terminal){
   // Coefficients of p = a0 + a1 * t +...+ a5 * t^5 
   VectorXd coeffs(6);
   double x = s0;
@@ -117,7 +117,7 @@ int solvepolyfullcond(double s0, double s0dot, double s02dot, double s1, double 
                 coeffs.col(acc_cond) = c;
                 cost(acc_cond) = cost_total;
                 
-                Trajectories.coservativeResize(6, Trajectories.cols() + 1);
+                Trajectories.conservativeResize(6, Trajectories.cols() + 1);
                 Trajectories.col(Trajectories.cols() - 1)  = c;
                 Costs.conservativeResize(Costs.size() + 1);
                 Costs(Costs.size() - 1) = cost_total;
@@ -196,7 +196,7 @@ int solvepolytwocond(double s0, double s0dot, double s02dot, double s1dot, doubl
                 coeffs.col(acc_cond) = c;
                 cost(acc_cond) = cost_total;
                 
-                Trajectories.coservativeResize(6, Trajectories.cols() + 1);
+                Trajectories.conservativeResize(6, Trajectories.cols() + 1);
                 Trajectories.col(Trajectories.cols() - 1)  = c;
                 Costs.conservativeResize(Costs.size() + 1);
                 Costs(Costs.size() - 1) = cost_total;
@@ -223,7 +223,7 @@ int velocitykeeptrajectories(double s0, double s0dot, double s02dot, double s1do
             }
         }
         else {
-            vds1dot = max_speed - s1dot;
+            vel_ds1dot = max_speed - s1dot;
             ds1setdot.push_back(vel_ds1dot);
             break;
         }
