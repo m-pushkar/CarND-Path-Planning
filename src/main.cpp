@@ -178,11 +178,11 @@ int main() {
            */
             
             double mph_mps = 1.0/2.237;
-            double max_speed = 45 * mph_mps;
+            double max_speed = 49 * mph_mps;
             int prev_path_size = previous_path_x.size();
             int max_s_waypt = map_waypoints_s[map_waypoints_s.size() - 1];
             
-            step +=1;
+            step += 1;
             
             cout << "------------------------------------------------------" << endl;
             cout << " [-] Step: " << step << endl;
@@ -199,31 +199,31 @@ int main() {
             vector<double> map_x_interpolate;
             vector<double> map_y_interpolate;
             vector<double> map_s_interpolate;
-            double s_map;                                                      // _map_s = s_map
-            double x_map;
-            double y_map;
+            double interpolate_s_map;                                                      // _map_s = s_map
+            double interpolate_x_map;
+            double interpolate_y_map;
             
-            for (int map_id = interpolate_start_id; map_id < interpolate_end_id; ++map_id) {
+            for (int map_id = interpolate_start_id; map_id < interpolate_end_id; map_id++) {
                 if (map_id > last_map_id ) {
                     int new_map_id = map_id - last_map_id - 1;
-                    s_map = map_waypoints_s[new_map_id] + max_s;
-                    x_map = map_waypoints_x[new_map_id];
-                    y_map = map_waypoints_y[new_map_id];
+                    interpolate_s_map = map_waypoints_s[new_map_id] + max_s;
+                    interpolate_x_map = map_waypoints_x[new_map_id];
+                    interpolate_y_map = map_waypoints_y[new_map_id];
                 }
                 else if (map_id < 0) {
                     int new_map_id = last_map_id + map_id + 1;
-                    s_map = map_waypoints_s[new_map_id] - max_s;
-                    x_map = map_waypoints_x[new_map_id];
-                    y_map = map_waypoints_y[new_map_id];
+                    interpolate_s_map = map_waypoints_s[new_map_id] - max_s;
+                    interpolate_x_map = map_waypoints_x[new_map_id];
+                    interpolate_y_map = map_waypoints_y[new_map_id];
                 }
                 else {
-                    s_map = map_waypoints_s[map_id];
-                    x_map = map_waypoints_x[map_id];
-                    y_map = map_waypoints_y[map_id];
+                    interpolate_s_map = map_waypoints_s[map_id];
+                    interpolate_x_map = map_waypoints_x[map_id];
+                    interpolate_y_map = map_waypoints_y[map_id];
                 }
-                map_s_interpolate.push_back(s_map);
-                map_x_interpolate.push_back(x_map);
-                map_y_interpolate.push_back(y_map);
+                map_s_interpolate.push_back(interpolate_s_map);
+                map_x_interpolate.push_back(interpolate_x_map);
+                map_y_interpolate.push_back(interpolate_y_map);
             }
             
             tk::spline x_s;
@@ -247,13 +247,13 @@ int main() {
             
             // Initialize Planner
             vector<Planner> planners;
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < 3; i++) {
                 double new_target_d = 2.0 + 4 * i - 0.15;
                 Planner planner;
                 MatrixXd s_trajectories (6,0);
-                VectorXd s_costs (0);                                                           // s_costs or s_cost??
+                VectorXd s_costs (0);                                                           
                 MatrixXd d_trajectories (6,0);
-                VectorXd d_costs (0);                                                          // d_costs or d_cost??
+                VectorXd d_costs (0);                                                         
                 
                 planner.s_trajectories = s_trajectories;
                 planner.s_costs = s_costs;
@@ -272,7 +272,7 @@ int main() {
             
             // Vehicles nearby
             vector<Vehicle> vehicle_nearby;
-            for (int i = 0; i < sensor_fusion.size(); ++i) {
+            for (int i = 0; i < sensor_fusion.size(); i++) {
                 // Parsing sensor fusion data
                 double s_other = sensor_fusion[i][5];
                 double s_dist = s_other - car_s;
@@ -315,9 +315,9 @@ int main() {
             int my_lane = mylane(car_d);
             
             // Nearest vehicle for each lane
-            for (int i = 0; i < vehicle_nearby.size(); ++i) {
+            for (int i = 0; i < vehicle_nearby.size(); i++) {
                 Vehicle new_vehicle = vehicle_nearby[i];
-                for (int j = 0; j < planners.size(); ++j) {
+                for (int j = 0; j < planners.size(); j++) {
                     if ((new_vehicle.d > planners[j].target_d - 2) && (new_vehicle.d <= planners[j].target_d + 2)) {
                         double ego_other = new_vehicle.s - car_s;
                         if (j == my_lane) {
@@ -372,7 +372,7 @@ int main() {
                 if (target_s1dot > max_speed) {
                     target_s1dot = max_speed;
                 }
-                for (int i = 0; i < 3; ++i) {
+                for (int i = 0; i < 3; i++) {
                     
                     // Longitudinal trajectory
                     if (i == my_lane) {
@@ -416,7 +416,7 @@ int main() {
                     }
                     else {
                         planners[i].feasible_traj = false;
-                        cout << " [*] Feasible trajectory does not exist" << endl;
+                        cout << " [*1] Feasible trajectory does not exist" << endl;
                     }
                     
                     // Optimal trajectory
@@ -429,12 +429,12 @@ int main() {
                     // Cost matrix
                     if (ntraj == 0) {
                         planners[i].feasible_traj = false;
-                        cout << " [*] Feasible trajectory does not exist" << endl;
+                        cout << " [*2] Feasible trajectory does not exist" << endl;
                     }
                     else {
                         MatrixXd sd_costs(ns, nd);
-                        for (int ss = 0; ss < ns; ++ss) {
-                            for (int dd = 0; dd < nd; ++dd) {
+                        for (int ss = 0; ss < ns; ss++) {
+                            for (int dd = 0; dd < nd; dd++) {
                                 sd_costs(ss,dd) = k_long * planners[i].s_costs[ss] + k_lat * planners[i].d_costs[dd];
                             }
                         }
@@ -446,7 +446,7 @@ int main() {
                         if (max_iters >= ntraj) {
                             max_iters = ntraj;
                         }
-                        for (int k = 0; k < max_iters; ++k) {
+                        for (int k = 0; k < max_iters; k++) {
                             bool crash_predict = false;
                             int min_s_idx;
                             int min_d_idx;
@@ -454,14 +454,14 @@ int main() {
                             optimal_s_coeff = planners[i].s_trajectories.col(min_s_idx);
                             optimal_d_coeff = planners[i].d_trajectories.col(min_d_idx);
                             
-                            for (int l = 0; l < planning_horizon; ++l) {
+                            for (int l = 0; l < planning_horizon; l++) {
                                 
                                 // Ego vehicle position
                                 double new_s = position(optimal_s_coeff, l * 0.02);
                                 double new_d = position(optimal_d_coeff, l * 0.02);
                                 
                                 // Other vehicle position
-                                for (int m = 0; m < planners[i].obstacles.size(); ++m) {
+                                for (int m = 0; m < planners[i].obstacles.size(); m++) {
                                     Vehicle other_vehicle = planners[i].obstacles[m];
                                     double new_s_other = other_vehicle.s + l * 0.02 * (other_vehicle.speed - 0.1);
                                     double new_d_other = other_vehicle.d;
@@ -487,7 +487,7 @@ int main() {
                         planners[i].iters = iters;
                         if (iters == max_iters - 1) {
                             planners[i].feasible_traj = false;
-                            cout << " [*] Feasible trajectory does not exist" << endl;
+                            cout << " [*3] Feasible trajectory does not exist ("<< i <<")" << endl;
                         }
                     }
                 }
@@ -495,7 +495,7 @@ int main() {
                 // Optimal lane
                 double min_cost = 999999.9;
                 int opt = 1;
-                for (int i = 0; i < 3; ++i) {
+                for (int i = 0; i < 3; i++) {
                     if (planners[i].feasible_traj) {
                         if (planners[i].min_cost <= min_cost) {
                             opt = i;
@@ -503,7 +503,7 @@ int main() {
                         }
                     }
                 }
-                for (int i = 0; i < 2; ++i) {
+                for (int i = 0; i < 2; i++) {
                     if ((i != opt) && (abs(planners[i].min_cost - min_cost) < 0.1)) {
                         if (planners[i].target_dist > planners[opt].target_dist) {
                             opt = i;
@@ -527,7 +527,7 @@ int main() {
                 
                 // Run
                 
-                for (int z = 0; z < planning_horizon + 1; ++z) {
+                for (int z = 0; z < planning_horizon + 1; z++) {
                     double s = position(optimal_s_coeff, z * 0.02);
                     double d = position(optimal_d_coeff, z * 0.02);
                     

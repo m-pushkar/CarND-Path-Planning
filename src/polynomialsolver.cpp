@@ -17,7 +17,7 @@ double huber_loss(double speed, double target){
     return (1.0/2 * (speed - target) * (speed - target));
   }
   else {
-    return (delta * (abs(speed - target)) - 1.0/2 * delta);
+    return (delta * (abs(speed - target)) - 0.5 * delta);
   }
 }
 
@@ -66,8 +66,8 @@ int solvepolyfullcond(double s0, double s0dot, double s02dot, double s1, double 
     double kt = 0; // Time weight
     int acc_cond = 0;
     
-    for (int i = 0; i < ds1set.size(); ++i){
-        for (int j = 0; j < tjset.size(); ++j){
+    for (int i = 0; i < ds1set.size(); i++){
+        for (int j = 0; j < tjset.size(); j++){
             double ds1 = ds1set[i];
             double tj = tjset[j];
             double s1_target = s1 + ds1;
@@ -79,9 +79,9 @@ int solvepolyfullcond(double s0, double s0dot, double s02dot, double s1, double 
             m1_t << 1, tj, tj * tj,
                     0, 1, 2 * tj,
                     0, 0, 2;
-            m2_t << pow(tj,3), pow(tj,4), pow(tj,5),
-                    3 * pow(tj,2), 4 * pow(tj,3), 5 * pow(tj,4),
-                    6 * tj, 12 * pow(tj,2), 20 * pow(tj,3);
+            m2_t << pow(tj,3.), pow(tj,4.), pow(tj,5.),
+                    3 * pow(tj,2.), 4 * pow(tj,3.), 5 * pow(tj,4.),
+                    6 * tj, 12 * pow(tj,2.), 20 * pow(tj,3.);
             
             Vector3d z1;
             z1 << s1_target, s1dot, s12dot;
@@ -101,13 +101,13 @@ int solvepolyfullcond(double s0, double s0dot, double s02dot, double s1, double 
                 // Calculate cost
                 double cost_jerk = 36 * c3(0) * c3(0) * tj \
                 + 144 * c3(0) * c3(1) * tj * tj \
-                + (192 * c3(1) * c3(1) + 240 * c3(0) * c3(2)) * pow(tj,3) \
-                + 720 * c3(1) * c3(2) * pow(tj,4) \
-                + 720 * c3(2) * c3(2) * pow(tj,5);
+                + (192 * c3(1) * c3(1) + 240 * c3(0) * c3(2)) * pow(tj,3.) \
+                + 720 * c3(1) * c3(2) * pow(tj,4.) \
+                + 720 * c3(2) * c3(2) * pow(tj,5.);
                 
                 double cost_terminal = ds1 * ds1;
                 
-                double speed_terminal = c0(1) + 2 * c0(2) * tj + 3 * c3(0) * tj * tj + 4 * c3(1) * pow(tj,3) + 5 * c3(2) * pow(tj,4);
+                double speed_terminal = c0(1) + 2 * c0(2) * tj + 3 * c3(0) * tj * tj + 4 * c3(1) * pow(tj,3.) + 5 * c3(2) * pow(tj,4.);
                 
                 double cost_total = kj * cost_jerk + kt * tj + ks * cost_terminal + kspeed * huber_loss(speed_terminal, max_speed);
                 
@@ -152,8 +152,8 @@ int solvepolytwocond(double s0, double s0dot, double s02dot, double s1dot, doubl
     double ksdot = 0; // Terminal state weight
     int acc_cond = 0;
     
-    for (int i = 0; i < ds1setdot.size(); ++i){
-        for (int j = 0; j < tjset.size(); ++j){
+    for (int i = 0; i < ds1setdot.size(); i++){
+        for (int j = 0; j < tjset.size(); j++){
             double ds1dot = ds1setdot[i];
             double tj = tjset[j];
             double s1dot_target = s1dot + s12dot;
@@ -162,7 +162,7 @@ int solvepolytwocond(double s0, double s0dot, double s02dot, double s1dot, doubl
             Vector2d z1;
             z1 << s1dot_target, s12dot;
             Matrix2d m2;
-            m2 << 3 * tj * tj, 4 * pow(tj,3),
+            m2 << 3 * tj * tj, 4 * pow(tj,3.),
                   6 * tj, 12 * tj * tj;
             
             Matrix2d c2;
@@ -186,7 +186,7 @@ int solvepolytwocond(double s0, double s0dot, double s02dot, double s1dot, doubl
                 
                 double cost_terminal = ds1dot * ds1dot;
                 
-                double speed_terminal = c0(1) + 2 * c0(2) * tj + 3 * c3(0) * tj * tj + 4 * c3(1) * pow(tj,3);
+                double speed_terminal = c0(1) + 2 * c0(2) * tj + 3 * c3(0) * tj * tj + 4 * c3(1) * pow(tj,3.);
                 
                 double cost_total = kj * cost_jerk + kt * tj + ksdot * cost_terminal + kspeed * huber_loss(speed_terminal, max_speed);
                 
@@ -215,7 +215,7 @@ int velocitykeeptrajectories(double s0, double s0dot, double s02dot, double s1do
     double kspeed = 9.0;
     double acc_thresh = 3.5; // Tuneable
     
-    for (int i = 0; i < ds1candot.size(); ++i){
+    for (int i = 0; i < ds1candot.size(); i++){
         double vel_ds1dot = ds1candot[i];
         if (s1dot + vel_ds1dot <= max_speed){
             if (s1dot + vel_ds1dot >= 0){
@@ -235,7 +235,7 @@ int velocitykeeptrajectories(double s0, double s0dot, double s02dot, double s1do
 
 int followtrajectories(double s0, double s0dot, double s02dot, double s_lv0, double s_lv0dot, double max_speed, MatrixXd &s_trajectories, VectorXd &s_costs){
     double safe_dist = 15.0;
-    double t = 1.0; // Time gap
+    double tau = 1.0; // Time gap
     double kspeed = 9.0;
     double ks = 0.0;
     double acc_thresh = 3.3; // Tuneable
@@ -243,7 +243,7 @@ int followtrajectories(double s0, double s0dot, double s02dot, double s_lv0, dou
     vector<double> ds1set = {-5.0, -3.0, 0.0, 5.0};
     double s12dot = 0.0;
     
-    for (int i = 0; i < tjset.size(); ++i){
+    for (int i = 0; i < tjset.size(); i++){
         vector<double> follow_tjset;
         double tj = tjset[i];
         follow_tjset.push_back(tj);
@@ -254,7 +254,7 @@ int followtrajectories(double s0, double s0dot, double s02dot, double s_lv0, dou
         double s_lv12dot = 0;
         
         // Target pos, vel, acc
-        double s_target = s_lv1 - (safe_dist + t * s_lv1dot);
+        double s_target = s_lv1 - (safe_dist + tau * s_lv1dot);
         double s_targetdot = s_lv1dot;
         double s_target2dot = 0;
         
@@ -296,8 +296,8 @@ vector<int> optimalcombo(VectorXd s_costs, VectorXd d_costs){
     
     // Sum matrix
     MatrixXd sd_sum(s_costs.size(), d_costs.size());
-    for (int row = 0; row < s_costs.size(); ++row){
-        for (int col = 0; col < d_costs.size(); ++col){
+    for (int row = 0; row < s_costs.size(); row++){
+        for (int col = 0; col < d_costs.size(); col++){
             sd_sum(row,col) = k_long * s_costs(row) + k_lat * d_costs(col);
         }
     }

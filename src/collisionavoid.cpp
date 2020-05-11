@@ -33,7 +33,7 @@ int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, do
   
   // Set ego vehicle safe distance
   double safe_dist_long = 5.5;
-  double safe_dist_lat = 1.9;
+  double safe_dist_lat = 1.5;
   
   //Vehicle wrapper
   MatrixXd rec_wrapper(2,4);
@@ -54,7 +54,7 @@ int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, do
   trans0 << s0, d0;
   trans1 << s1, d1;
   
-  for (int i = 0; i < rec_wrapper.cols(); ++i){
+  for (int i = 0; i < rec_wrapper.cols(); i++){
     rec0.col(i) = rot0 * rec_wrapper.col(i) + trans0;
     rec1.col(i) = rot1 * rec_wrapper.col(i) + trans1;
   }
@@ -64,14 +64,14 @@ int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, do
   axis << cos(theta0), sin(theta0), cos(theta1), sin(theta1),
           sin(theta0), -cos(theta0), sin(theta1), -cos(theta1);
   
-  for (int i = 0; i < axis.cols(); ++i){
+  for (int i = 0; i < axis.cols(); i++){
     Vector2d principal_axis = axis.col(i);
     
     // Projection of rec0
     double min0 = principal_axis.dot(rec0.col(0));
     
     double max0 = min0;
-    for (int j = 0; j < rec0.cols(); ++j){
+    for (int j = 0; j < rec0.cols(); j++){
       double projection0 = principal_axis.dot(rec0.col(j));
       if (projection0 > max0) max0 = projection0;
       if (projection0 < min0) min0 = projection0;
@@ -80,7 +80,7 @@ int CollisionAvoid(double s0, double d0, double theta0, double s1, double d1, do
     // Projection of rec1
     double min1 = principal_axis.dot(rec1.col(0));
     double max1 = min1;
-    for (int j = 0; j < rec1.cols(); ++j){
+    for (int j = 0; j < rec1.cols(); j++){
       double projection1 = principal_axis.dot(rec1.col(j));
       if (projection1 > max1) max1 = projection1;
       if (projection1 < min1) min1 = projection1;

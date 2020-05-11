@@ -11,12 +11,14 @@ using namespace std;
 using namespace Eigen;
 
 // Transforation between radians and degrees
+constexpr double pi() {return M_PI;}
+
 double deg_rad(double x){
-  return (x * M_PI / 180);
+  return (x * pi() / 180);
 }
 
 double rad_deg(double y){
-  return (y * 180 / M_PI);
+  return (y * 180 / pi());
 }
 
 double distance(double x1, double y1, double x2, double y2){
@@ -65,7 +67,7 @@ vector <VectorXd> InterpolateWaypt(double x, double y, const vector<double> &map
   
   // Ax = b construction
   MatrixXd A(interpolate, 4);
-  for (int i = 0; i < interpolate; ++i){
+  for (int i = 0; i < interpolate; i++){
     RowVectorXd sc(4);
     sc << 1, ss(i), ss(i) * ss(i), ss(i) * ss(i) * ss(i);
     A.row(i) = sc;
@@ -87,7 +89,7 @@ int NextWaypt(double x, double y, double theta, const vector<double> &maps_x, co
   double heading = atan2((y_maps - y), (x_maps - x));
   double angle = abs(theta - heading);
   
-  if (angle > M_PI/4){
+  if (angle > pi()/4){
     nearest_waypt++;
   }
   return nearest_waypt;
@@ -112,7 +114,7 @@ vector<double> Frenet(double x, double y, double theta, const vector<double> &ma
   double proj_y = proj_normal * n_y;
   double frenet_d = distance(x_x, x_y, proj_x, proj_y);
   
-  // Check frenet_dist is +ve or -ve by compairing with center point
+  // Check frenet_d is +ve or -ve by compairing with center point
   double center_x = 1000 - maps_x[prev_waypt];
   double center_y = 2000 - maps_y[prev_waypt];
   double center_pos = distance(center_x, center_y, x_x, x_y);
@@ -145,7 +147,7 @@ vector<double> Cartesian(double s, double d, const vector<double> &maps_s, const
   double seg_s = (s - maps_s[prev_waypt]);
   double seg_x = maps_x[prev_waypt] + seg_s * cos(heading);
   double seg_y = maps_y[prev_waypt] + seg_s * sin(heading);
-  double perpend_heading = heading - M_PI/2;
+  double perpend_heading = heading - pi()/2;
   double x = seg_x + d * cos(perpend_heading);
   double y = seg_y + d * sin(perpend_heading);
   

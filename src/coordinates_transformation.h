@@ -10,7 +10,8 @@ using std::vector;
 using namespace std;
 using namespace Eigen;
 
-// constexpr double pi();
+constexpr double pi();
+
 double deg_rad(double x);
 
 double rad_deg(double y);
