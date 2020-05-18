@@ -1,6 +1,78 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
-   
+
+---
+## Introduction
+
+In this project your goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. Car's localization and sensor fusion data will be provided, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one lane to another. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, it should take a little over 5 minutes to complete 1 loop. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3.
+
+To justify these objectives, I developed a the path planning algorithm as follows:
+
+1. Sparse map waypoints interpolation
+2. Planner initialization
+3. Nearby obstacle information assignment to each planner
+4. Jerk-minimizing trajectory generation
+5. Optimal trajectory selection
+
+## Implementation
+### Sparse map waypoints interpolation
+
+Given simulator map is recorded at 30m intervals, so smooth trajectory cannot be obtained directly using `Cartesian` function. Hence waypoints are interpolated using `spline` function with 0.1m interval. With help of these coarse waypoints we get smoothe trajectory in global coordniates.
+
+### Planner initialization
+
+Driving is fairly easy and structural on highways. Planner is assigned for each lane, and each planner creates best trajectory fro that particular lane.Each planner contains following elements:
+
+```c++
+typedef struct Planner {
+  double target_d;
+  vector<Vehicle> obstacles;
+  Vehicle target_to_follow;
+  int following_target_id;
+  double dist_to_target;
+  MatrixXd s_trajectories;
+  VectorXd s_costs;
+  MatrixXd d_trajectories;
+  VectorXd d_costs;
+  bool obstacle_following;
+  bool feasible_traj_exist;
+  int optimal_s_id;
+  int optimal_d_id;
+  double minimal_cost;
+  int iters;
+} Planner;
+```
+
+### Nearby obstacle information assignment to each planner
+
+The position and velocity information of nearby vehicles from `sensor_fusion` is transmitted to each planner. If there is obstacle in the lane, car will  go into `obstacle_following` or if there is nothing in the lane car will go into `velocity_keeping`.
+
+### Jerk-minimizing trajectory generation
+
+`obstacle_following` and `velocity_keeping` trajectories are generated without considering collision. Here **5th order polynomial** trajectories are created that minimizes jerk in Frenet frame independently fro s and d. Costs considered are:
+
+1. Jerk (smaller is favorable)
+2. Terminal state (safe distance in s-direction and cross track error in d-direction)
+3. Speed (near to `max_speed` is favorable)
+
+After this jerk is minimized and speed is kept near maximum speed to keep the cost low. [Huber Loss](https://en.wikipedia.org/wiki/Huber_loss) is used to speed up the speed up to` max_speed`. Total cost in calculated considering longitudinal and lateral costs.
+
+```c++
+sd_cost(ss,dd) = klon * planners[i].s_cost[ss] + klat * planners[i].d_cost[dd];
+```
+
+### Optimal trajectory selection
+
+Path planner selects collision free trajectory in Frenet frame with lowest cost of each planner.
+
+1. Best collision free trajectory is calculated for each planner
+2. Optimal trajectory  with lowest cost amongst is selected
+
+## Conclusion
+
+It is fairly possible to drive withput difficulty in all traffic consditions and when there is a safe path available with speed close to `max_speed`, ego vehicle changes lane. 
+
+# Udacity README   
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).  
 
@@ -8,68 +80,6 @@ To run the simulator on Mac/Linux, first make the binary file executable with th
 ```shell
 sudo chmod u+x {simulator_file_name}
 ```
-
-### Goals
-In this project your goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. You will be provided the car's localization and sensor fusion data, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one lane to another. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, it should take a little over 5 minutes to complete 1 loop. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3.
-
-#### The map of the highway is in data/highway_map.txt
-Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoint's map coordinate position, the s value is the distance along the road to get to that waypoint in meters, the dx and dy values define the unit normal vector pointing outward of the highway loop.
-
-The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
-
-## Basic Build Instructions
-
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./path_planning`.
-
-Here is the data provided from the Simulator to the C++ Program
-
-#### Main car's localization Data (No Noise)
-
-["x"] The car's x position in map coordinates
-
-["y"] The car's y position in map coordinates
-
-["s"] The car's s position in frenet coordinates
-
-["d"] The car's d position in frenet coordinates
-
-["yaw"] The car's yaw angle in the map
-
-["speed"] The car's speed in MPH
-
-#### Previous path data given to the Planner
-
-//Note: Return the previous list but with processed points removed, can be a nice tool to show how far along
-the path has processed since last time. 
-
-["previous_path_x"] The previous list of x points previously given to the simulator
-
-["previous_path_y"] The previous list of y points previously given to the simulator
-
-#### Previous path's end s and d values 
-
-["end_path_s"] The previous list's last point's frenet s value
-
-["end_path_d"] The previous list's last point's frenet d value
-
-#### Sensor Fusion Data, a list of all other car's attributes on the same side of the road. (No Noise)
-
-["sensor_fusion"] A 2d vector of cars and then that car's [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, car's d position in frenet coordinates. 
-
-## Details
-
-1. The car uses a perfect controller and will visit every (x,y) point it recieves in the list every .02 seconds. The units for the (x,y) points are in meters and the spacing of the points determines the speed of the car. The vector going from a point to the next point in the list dictates the angle of the car. Acceleration both in the tangential and normal directions is measured along with the jerk, the rate of change of total Acceleration. The (x,y) point paths that the planner recieves should not have a total acceleration that goes over 10 m/s^2, also the jerk should not go over 50 m/s^3. (NOTE: As this is BETA, these requirements might change. Also currently jerk is over a .02 second interval, it would probably be better to average total acceleration over 1 second and measure jerk from that.
-
-2. There will be some latency between the simulator running and the path planner returning a path, with optimized code usually its not very long maybe just 1-3 time steps. During this delay the simulator will continue using points that it was last given, because of this its a good idea to store the last points you have used so you can have a smooth transition. previous_path_x, and previous_path_y can be helpful for this transition since they show the last points given to the simulator controller with the processed points already removed. You would either return a path that extends this previous path or make sure to create a new path that has a smooth transition with this last path.
-
-## Tips
-
-A really helpful resource for doing this project and creating smooth trajectories was using http://kluge.in-chemnitz.de/opensource/spline/, the spline function is in a single hearder file is really easy to use.
-
----
 
 ## Dependencies
 
