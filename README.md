@@ -4,73 +4,71 @@ Self-Driving Car Engineer Nanodegree Program
 ---
 ## Introduction
 
+![01](./images/Path-planning.gif)
+
 In this project your goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. Car's localization and sensor fusion data will be provided, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one lane to another. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, it should take a little over 5 minutes to complete 1 loop. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3.
 
 To justify these objectives, I developed a the path planning algorithm as follows:
 
-1. Sparse map waypoints interpolation
-2. Planner initialization
-3. Nearby obstacle information assignment to each planner
-4. Jerk-minimizing trajectory generation
-5. Optimal trajectory selection
+1. Prediction
+2. Behavior planner
+3. Trajectory generation
 
 ## Implementation
-### Sparse map waypoints interpolation
+### Prediction
 
-Given simulator map is recorded at 30m intervals, so smooth trajectory cannot be obtained directly using `Cartesian` function. Hence waypoints are interpolated using `spline` function with 0.1m interval. With help of these coarse waypoints we get smoothe trajectory in global coordniates.
+Prediction algorithm gathers infromation from telemetry and sensor fusion data to sense the environment. Based on the data other cars' position is calculated. Safe distance between ego vehicle and `30 meters` for cars ahead and `15 meters` for cars behind is always kept. When safe distance crtiteria is satisfied then only lane change is allowed if required.
 
-### Planner initialization
+### Behavior planner
 
-Driving is fairly easy and structural on highways. Planner is assigned for each lane, and each planner creates best trajectory fro that particular lane.Each planner contains following elements:
-
-```c++
-typedef struct Planner {
-  double target_d;
-  vector<Vehicle> obstacles;
-  Vehicle target_to_follow;
-  int following_target_id;
-  double dist_to_target;
-  MatrixXd s_trajectories;
-  VectorXd s_costs;
-  MatrixXd d_trajectories;
-  VectorXd d_costs;
-  bool obstacle_following;
-  bool feasible_traj_exist;
-  int optimal_s_id;
-  int optimal_d_id;
-  double minimal_cost;
-  int iters;
-} Planner;
-```
-
-### Nearby obstacle information assignment to each planner
-
-The position and velocity information of nearby vehicles from `sensor_fusion` is transmitted to each planner. If there is obstacle in the lane, car will  go into `obstacle_following` or if there is nothing in the lane car will go into `velocity_keeping`.
-
-### Jerk-minimizing trajectory generation
-
-`obstacle_following` and `velocity_keeping` trajectories are generated without considering collision. Here **5th order polynomial** trajectories are created that minimizes jerk in Frenet frame independently fro s and d. Costs considered are:
-
-1. Jerk (smaller is favorable)
-2. Terminal state (safe distance in s-direction and cross track error in d-direction)
-3. Speed (near to `max_speed` is favorable)
-
-After this jerk is minimized and speed is kept near maximum speed to keep the cost low. [Huber Loss](https://en.wikipedia.org/wiki/Huber_loss) is used to speed up the speed up to` max_speed`. Total cost in calculated considering longitudinal and lateral costs.
+Driving is fairly easy and structural on highways. Behavior planner make decision about lane keeping, changing lane to left/right and slowing down. Behavior planner output is based on the prediction algorithm output. 
 
 ```c++
-sd_cost(ss,dd) = klon * planners[i].s_cost[ss] + klat * planners[i].d_cost[dd];
+// Step 2: Behavior planner
+            const double max_speed = 49;
+            const double max_acc = .224;
+            
+            if (front_car) { // There is car ahead of ego vehicle
+                if (!leftlane_car && lane > 0) { // left lane present and no car in left lane
+                    lane--; // Change lane
+                }
+                else if (!rightlane_car && lane !=2) { // right lane present and no car in right lane
+                    lane++; // Change lane
+                }
+                else {
+                    initial_vel -= max_acc;
+                }
+            }
+            else {
+                if (lane != 1) { // Ego vehicle is not in the center lane
+                    if ((lane == 0 && !rightlane_car) || (lane == 2 && !leftlane_car)) {
+                        lane = 1; // Steer back to center lane
+                    }
+                }
+                if (initial_vel < max_speed) {
+                    initial_vel += max_acc;
+                }
+            }
 ```
 
-### Optimal trajectory selection
+### Trajectory generation
 
-Path planner selects collision free trajectory in Frenet frame with lowest cost of each planner.
+Trajectory is generated based on ego vehicle's speed, coordinates and behavior planner output. Initially ego vehicle's position is taken as reference point and then last two points of previous trajectory are used to initialize the spline. To ensure the continuity of trajectory previous trajectory points are copied to new trajectory.
 
-1. Best collision free trajectory is calculated for each planner
-2. Optimal trajectory  with lowest cost amongst is selected
+Speed change is decided in the behavior planning algorithm and implemented on every point of trajectory instead of complete trajectory.
+
+```c++
+pt_x[i] = shift_x * cos(0 - ref_yaw) - shift_y * sin(0 - ref_yaw);
+pt_y[i] = shift_x * sin(0 - ref_yaw) + shift_y * cos(0 - ref_yaw);
+```
+
 
 ## Conclusion
 
-It is fairly possible to drive withput difficulty in all traffic consditions and when there is a safe path available with speed close to `max_speed`, ego vehicle changes lane. 
+It is fairly possible to drive without difficulty in all traffic consditions and when there is a safe path available with speed close to `max_speed`, ego vehicle changes lane. In simulator car drove close to `11 miles` in 15 minutes without an incident.
+
+![01](./images/Path-planning-4miles.png)
+![02](./images/Path-planning-10miles.png)
 
 # Udacity README   
 ### Simulator.
